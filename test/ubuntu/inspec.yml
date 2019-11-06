@@ -1,0 +1,11 @@
+name: 16.04
+title: Ubuntu 16.04 Configuration
+version: 0.1.0
+supports:
+  platform: aws
+supports:
+  - os-name: ubuntu
+    release: 16.04
+depends:
+  - name: linux-patch-baseline
+    url: https://github.com/dev-sec/linux-patch-baseline/archive/0.3.0.tar.gz

@@ -1,0 +1,80 @@
+---
+provisioner:
+  name: chef_zero
+  always_update_cookbooks: true
+  log_level: info
+  chef_license: accept-no-persist
+  product_name: chef
+  product_version: 14.10.9
+driver:
+  name: ec2
+  instance_type: <%= ENV['INSTANCE_TYPE'] || 't2.medium' %>
+  associate_public_ip: <%= ENV['ASSOCIATE_PUBLIC_IP'] || false %>
+  interface: <%= ENV['INTERFACE'] || 'private' %>
+  region: <%= ENV['AWS_DEFAULT_REGION'] || 'us-west-2' %>
+  retryable_tries: <%= ENV['RETRYABLE_TRIES'] || 90 %>
+  retryable_sleep: <%= ENV['RETRYABLE_SLEEP'] || 10 %>
+  subnet_id: <%= ENV['SUBNET_ID'] || '{insert default subnet}'%>
+  tags:
+    Name: <%= ENV['TEAMCITY_PROJECT_NAME'] || ENV['USER'] %> (Test in Progress)
+    Owner: <%= ENV['OWNER'] || 'test-kitchen' %>
+    Uuid: <%= require 'securerandom'; SecureRandom.uuid %>
+
+platforms:
+  - name: ubuntu-16.04
+    driver:
+      image_id: ami-{insert ami}
+    transport:
+      username: ubuntu
+      max_ssh_sessions: 6
+    verifier:
+      sudo: true
+    excludes:
+      - windows-hardening
+    
+  - name: windows-2012
+    driver:
+      image_id: ami-{insert ami}
+      iam_profile_name: test-kitchen-iam-instance-profile
+      user_data: ./files/windows-base-builder.ps1
+      block_device_mappings:
+        - device_name: /dev/sda1
+          ebs:
+            volume_type: gp2
+            volume_size: 100
+            delete_on_termination: true
+        - device_name: xvdf
+          ebs:
+            volume_type: gp2
+            snapshot_id: snap-{insert snap}
+            delete_on_termination: true
+    transport:
+      name: winrm
+      elevated: true
+    provisioner:
+      inspec_connection: winrm
+      inspec_port: 5985
+    excludes:
+      - ubuntu-hardening
+
+
+verifier:
+  name: inspec
+  reporter: 
+    - cli
+    - html:tmp/report.html
+    - junit:tmp/report.xml
+
+suites:
+    - name: ubuntu-hardening
+      excludes: 
+      - windows-2012
+      verifier:
+        inspec_tests:
+          - test/ubuntu
+    - name: windows-hardening
+      excludes: 
+      - ubuntu-16.04
+      verifier:
+        inspec_tests:
+          - test/windows-server
