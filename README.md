@@ -10,7 +10,7 @@
 **Commands**
 
  - bundle exec kitchen create
- - bundle exec kitchen verify (optionally include windows-2012r2 or ubuntu-16.04 to run against a particular AMI)
+ - bundle exec kitchen verify (optionally include windows or ubuntu to run against a particular AMI)
  - bundle exec kitchen destroy
 
 **More info**
